@@ -1,0 +1,13 @@
+.build/
+.swiftpm/
+dist/
+.DS_Store
+.agents/
+.codex/
+.env
+.env.*
+*.pem
+*.key
+*.log
+PLAN-APP-NOTCH.md
+VERIFICACION.md

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="pearl" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FCFCFF"/><stop offset="1" stop-color="#E0E3E8"/></linearGradient>
+    <linearGradient id="graphite" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#17181C"/><stop offset="1" stop-color="#060709"/></linearGradient>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="184" fill="url(#pearl)" stroke="#FFF" stroke-opacity=".7" stroke-width="2"/>
+  <path d="M256 356H768C752 356 742 366 742 382V576C742 637 711 668 650 668H374C313 668 282 637 282 576V382C282 366 272 356 256 356Z" fill="url(#graphite)"/>
+  <g fill="#FBFBFE"><rect x="398" y="470" width="48" height="84" rx="24"/><rect x="488" y="430" width="48" height="164" rx="24"/><rect x="578" y="454" width="48" height="116" rx="24"/></g>
+</svg>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+    <key>CFBundleExecutable</key><string>NotchMusic</string>
+    <key>CFBundleIdentifier</key><string>local.antoniomac.NotchMusic</string>
+    <key>CFBundleName</key><string>Notch Music</string>
+    <key>CFBundleIconFile</key><string>AppIcon</string>
+    <key>CFBundleDisplayName</key><string>Notch Music</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>0.4.1</string>
+    <key>CFBundleVersion</key><string>6</string>
+    <key>LSMinimumSystemVersion</key><string>14.0</string>
+    <key>LSUIElement</key><true/>
+    <key>NSHighResolutionCapable</key><true/>
+    <key>NSAppleEventsUsageDescription</key><string>Notch Music necesita leer la canción actual y controlar la reproducción de Spotify desde el notch.</string>
+    <key>NSAudioCaptureUsageDescription</key><string>Notch Music analiza únicamente el audio de Spotify para mover las barras con la música real. El audio se procesa en tu Mac y no se guarda ni se envía.</string>
+</dict></plist>
