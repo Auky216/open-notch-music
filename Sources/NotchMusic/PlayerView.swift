@@ -7,7 +7,7 @@ final class PanelState: ObservableObject {
     @Published var topHeight: CGFloat = 36
     @Published var compactWidth: CGFloat = 300
     @Published var expansion: CGFloat = 0
-    @Published var canvasSize = CGSize(width: 548, height: 334)
+    @Published var canvasSize = CGSize(width: 548, height: 298)
     var surfaceSize: CGSize {
         CGSize(width: compactWidth + (canvasSize.width - compactWidth) * expansion,
                height: topHeight + (canvasSize.height - topHeight) * expansion)
@@ -81,7 +81,6 @@ struct PlayerView: View {
         ZStack(alignment: .top) {
             if panel.expansion > 0.0001 {
                 VStack(spacing: 0) {
-                    Color.clear.frame(height: panel.topHeight)
                     header
                     if let track = store.track {
                         expanded(track)
@@ -160,7 +159,7 @@ struct PlayerView: View {
                     .frame(width: 28, height: 26).foregroundStyle(.white.opacity(0.65))
             }.buttonStyle(ChromeButtonStyle()).help("Ajustes").accessibilityLabel("Ajustes")
         }
-        .padding(.horizontal, 29).frame(height: 36)
+        .padding(.horizontal, 29).frame(height: panel.topHeight)
     }
 
     private func expanded(_ track: PlaybackSnapshot) -> some View {

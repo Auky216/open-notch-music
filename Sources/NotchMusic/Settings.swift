@@ -57,7 +57,7 @@ struct SettingsView: View {
                     Text("Tu música, justo aquí.").foregroundStyle(.secondary)
                 }
                 Spacer()
-                Text("0.4.1").font(.caption).foregroundStyle(.tertiary)
+                Text("0.4.2").font(.caption).foregroundStyle(.tertiary)
             }
             Form {
                 Section("Interacción") {

@@ -3,6 +3,26 @@ import Combine
 import SwiftUI
 
 final class NotchPanel: NSPanel {
+    static let overlayLevel = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
+
+    static func makeOverlay() -> NotchPanel {
+        let panel = NotchPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = false
+        // Setting isFloatingPanel resets level to NSFloatingWindowLevel (3).
+        // Apply the explicit overlay level only after all panel behavior is configured.
+        panel.isFloatingPanel = true
+        panel.hidesOnDeactivate = false
+        panel.becomesKeyOnlyIfNeeded = true
+        panel.isMovable = false
+        panel.acceptsMouseMovedEvents = true
+        panel.collectionBehavior = [.canJoinAllSpaces, .canJoinAllApplications, .fullScreenAuxiliary,
+                                    .fullScreenDisallowsTiling, .stationary, .ignoresCycle]
+        panel.level = overlayLevel
+        return panel
+    }
+
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
     // AppKit normally moves windows below the menu bar, separating the island from the camera.
@@ -33,7 +53,7 @@ final class NotchWindowController {
     private var lastMotionTime: TimeInterval = 0
     private let surfaceMask = CAShapeLayer()
     static let expandedWidth: CGFloat = 548
-    static let expandedBodyHeight: CGFloat = 296
+    static let expandedBodyHeight: CGFloat = 260
     var openSettings: (() -> Void)?
     private(set) var hapticCount = 0
     var reducedMotionOverride: Bool?
@@ -47,18 +67,7 @@ final class NotchWindowController {
         self.observePointer = observePointer
         self.playback = playback
         self.settings = settings
-        panel = NotchPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-        panel.isOpaque = false
-        panel.backgroundColor = .clear
-        panel.hasShadow = false
-        panel.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
-        panel.collectionBehavior = [.canJoinAllSpaces, .canJoinAllApplications, .fullScreenAuxiliary,
-                                    .fullScreenDisallowsTiling, .stationary, .ignoresCycle]
-        panel.isFloatingPanel = true
-        panel.hidesOnDeactivate = false
-        panel.becomesKeyOnlyIfNeeded = true
-        panel.isMovable = false
-        panel.acceptsMouseMovedEvents = true
+        panel = NotchPanel.makeOverlay()
         let host = NSHostingView(rootView: PlayerView(store: playback, panel: state))
         host.sizingOptions = []
         host.wantsLayer = true
@@ -155,6 +164,7 @@ final class NotchWindowController {
 
     private func update(animated: Bool) {
         guard let screen = settings.selectedScreen else { panel.orderOut(nil); return }
+        if panel.level != NotchPanel.overlayLevel { panel.level = NotchPanel.overlayLevel }
         let topHeight = max(36, screen.safeAreaInsets.top)
         if state.topHeight != topHeight { state.topHeight = topHeight }
         let compactWidth: CGFloat
@@ -190,7 +200,7 @@ final class NotchWindowController {
     private func updateHitTesting() {
         let point = NSEvent.mouseLocation
         let local = CGPoint(x: point.x - frame.minX, y: frame.maxY - point.y)
-        let path = NotchShape().path(in: CGRect(origin: .zero, size: frame.size))
+        let path = silhouette(in: frame.size)
         panel.ignoresMouseEvents = !path.contains(local)
     }
 
@@ -220,7 +230,7 @@ final class NotchWindowController {
         withTransaction(transaction) { state.expansion = CGFloat(motion.position) }
         lastPointerPoint = nil
         let size = state.surfaceSize
-        let path = NotchShape().path(in: CGRect(origin: .zero, size: size)).cgPath
+        let path = silhouette(in: size).cgPath
         // NSHostingView uses flipped coordinates, matching the SwiftUI silhouette.
         var transform = CGAffineTransform(translationX: (state.canvasSize.width - size.width) / 2, y: 0)
         CATransaction.begin()
@@ -239,9 +249,10 @@ final class NotchWindowController {
         guard lastPointerPoint != point else { return }
         lastPointerPoint = point
         let local = CGPoint(x: point.x - frame.minX, y: frame.maxY - point.y)
-        panel.ignoresMouseEvents = !NotchShape().path(in: CGRect(origin: .zero, size: frame.size)).contains(local)
+        let path = silhouette(in: frame.size)
+        panel.ignoresMouseEvents = !path.contains(local)
         // Include the camera itself and a small approach area just below the island.
-        let inside = frame.insetBy(dx: -3, dy: -6).contains(point)
+        let inside = path.contains(local) || (!state.expanded && frame.insetBy(dx: -3, dy: -6).contains(point))
         if !inside, pointerInside, NSEvent.pressedMouseButtons & 1 != 0 { return }
         guard inside != pointerInside else { return }
         pointerInside = inside
@@ -252,6 +263,10 @@ final class NotchWindowController {
         guard settings.haptics else { return }
         hapticCount += 1
         NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+    }
+
+    private func silhouette(in size: CGSize) -> Path {
+        NotchShape().path(in: CGRect(origin: .zero, size: size))
     }
 
     func saveSnapshot(to url: URL) throws {
@@ -283,7 +298,7 @@ final class NotchWindowController {
         spaceRecovery = Task { [weak self] in
             // Space transitions finish after the initial activation notification.
             // Re-order without activating our app or making the panel key.
-            for delay in [0, 220, 450] {
+            for delay in [0, 250, 500, 750] {
                 if delay > 0 { try? await Task.sleep(for: .milliseconds(delay)) }
                 guard !Task.isCancelled, let self else { return }
                 self.update(animated: false)
@@ -305,6 +320,10 @@ final class NotchWindowController {
             "frontmost": frontmost?.bundleIdentifier ?? "", "onScreen": ownIndex != nil,
             "aboveFrontmostWindow": above, "expanded": state.expanded,
             "joinsAllApplications": panel.collectionBehavior.contains(.canJoinAllApplications),
+            "windowLevel": panel.level.rawValue, "requiredWindowLevel": NotchPanel.overlayLevel.rawValue,
+            "pid": ProcessInfo.processInfo.processIdentifier,
+            "version": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown",
+            "compactWidth": state.compactWidth, "menuBarHeight": state.topHeight,
             "topErrorPoints": abs(frame.maxY - screenTop),
             "timestamp": ISO8601DateFormatter().string(from: Date())
         ]
