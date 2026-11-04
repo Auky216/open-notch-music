@@ -68,7 +68,7 @@ final class NotchWindowController {
         self.playback = playback
         self.settings = settings
         panel = NotchPanel.makeOverlay()
-        let host = NSHostingView(rootView: PlayerView(store: playback, panel: state))
+        let host = NSHostingView(rootView: PlayerView(store: playback, panel: state, settings: settings))
         host.sizingOptions = []
         host.wantsLayer = true
         host.layer?.mask = surfaceMask
@@ -284,6 +284,10 @@ final class NotchWindowController {
     }
 
     func setHoverEnabledForCheck(_ enabled: Bool) { settings.hoverToOpen = enabled }
+    func setAppearanceForCheck(_ appearance: IslandAppearance) {
+        settings.appearance = appearance
+        settings.visualizerColor = .album
+    }
 
     private func configurePointerTimer(nearTop: Bool) {
         guard observePointer, !displaySleeping else { return }

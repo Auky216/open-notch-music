@@ -30,7 +30,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let animationCheck = arguments.firstIndex(of: "--verify-animations")
         let demo = arguments.contains("--demo") || arguments.contains("--render-preview") || animationCheck != nil
         playback = PlaybackStore(demo: demo)
-        if animationCheck != nil, let defaults = UserDefaults(suiteName: "local.antoniomac.NotchMusic.QA") {
+        if animationCheck != nil || arguments.contains("--render-preview"),
+           let defaults = UserDefaults(suiteName: "local.antoniomac.NotchMusic.QA") {
             defaults.removePersistentDomain(forName: "local.antoniomac.NotchMusic.QA")
             settings = SettingsStore(defaults: defaults)
             settings.hoverToOpen = false
@@ -119,7 +120,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func quit() { NSApp.terminate(nil) }
     @objc private func showSettings() {
         if settingsWindow == nil {
-            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 490, height: 565),
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 490, height: 650),
                                   styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
             window.title = "Notch Music"
             window.titlebarAppearsTransparent = true
@@ -159,7 +160,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         state.expansion = 1
         state.canvasSize = CGSize(width: NotchWindowController.expandedWidth, height: state.topHeight + NotchWindowController.expandedBodyHeight)
         let preview = VStack(spacing: 35) {
-            PlayerView(store: playback, panel: state).frame(width: NotchWindowController.expandedWidth, height: state.topHeight + NotchWindowController.expandedBodyHeight)
+            PlayerView(store: playback, panel: state, settings: settings).frame(width: NotchWindowController.expandedWidth, height: state.topHeight + NotchWindowController.expandedBodyHeight)
             Text("NOTCH MUSIC").font(.system(size: 12, weight: .medium, design: .rounded)).tracking(4).foregroundStyle(.white.opacity(0.55))
             Text("Tu música, justo aquí.").font(.system(size: 25, weight: .light)).foregroundStyle(.white.opacity(0.85))
         }.frame(width: 800, height: 480, alignment: .top)

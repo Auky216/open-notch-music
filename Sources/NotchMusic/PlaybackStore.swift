@@ -7,6 +7,8 @@ final class PlaybackStore: ObservableObject {
     @Published private(set) var track: PlaybackSnapshot?
     @Published private(set) var artwork: NSImage?
     @Published private(set) var tint: Color = .mint
+    @Published private(set) var secondaryTint: Color = Color(red: 0.07, green: 0.25, blue: 0.22)
+    @Published private(set) var visualizerTint: Color = .mint
     @Published private(set) var connected = false
     @Published private(set) var busy = false
     @Published private(set) var message = "Conecta Spotify para ver y controlar lo que escuchas."
@@ -34,8 +36,7 @@ final class PlaybackStore: ObservableObject {
         if demo {
             track = .demo
             connected = true
-            artwork = Self.demoArtwork()
-            tint = Color(red: 0.61, green: 0.76, blue: 0.95)
+            setArtwork(Self.demoArtwork())
         }
         let center = NSWorkspace.shared.notificationCenter
         observers.append(center.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { [weak self] _ in
@@ -146,6 +147,8 @@ final class PlaybackStore: ObservableObject {
         currentArtworkURL = nil
         artwork = nil
         tint = .mint
+        secondaryTint = Color(red: 0.07, green: 0.25, blue: 0.22)
+        visualizerTint = .mint
     }
 
     private func apply(_ snapshot: PlaybackSnapshot) {
@@ -169,6 +172,8 @@ final class PlaybackStore: ObservableObject {
         currentArtworkURL = snapshot.artworkURL
         artwork = nil
         tint = .mint
+        secondaryTint = Color(red: 0.07, green: 0.25, blue: 0.22)
+        visualizerTint = .mint
         guard let url = snapshot.artworkURL else { return }
         if let cached = cache.object(forKey: url as NSURL) { setArtwork(cached); return }
         artworkTask = Task {
@@ -193,15 +198,10 @@ final class PlaybackStore: ObservableObject {
 
     private func setArtwork(_ image: NSImage) {
         artwork = image
-        guard let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1, pixelsHigh: 1, bitsPerSample: 8,
-                                         samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
-                                         colorSpaceName: .deviceRGB, bytesPerRow: 4, bitsPerPixel: 32),
-              let context = NSGraphicsContext(bitmapImageRep: rep) else { return }
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = context
-        image.draw(in: NSRect(x: 0, y: 0, width: 1, height: 1))
-        NSGraphicsContext.restoreGraphicsState()
-        if let color = rep.colorAt(x: 0, y: 0) { tint = Color(nsColor: color) }
+        let palette = ArtworkPalette.extract(from: image)
+        tint = Color(nsColor: palette.background)
+        secondaryTint = Color(nsColor: palette.secondary)
+        visualizerTint = Color(nsColor: palette.accent)
     }
 
     func openSpotify() {

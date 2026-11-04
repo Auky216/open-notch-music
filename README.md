@@ -8,14 +8,16 @@ Controla Spotify desde una interfaz nativa, compacta y animada. Desarrollado con
 
 **Código abierto · Licencia MIT · macOS 14+ · Apple Silicon**
 
-[Descargar v0.4.3](https://github.com/Auky216/open-notch-music/releases/download/v0.4.3/OpenNotch-Music-0.4.3-macOS-arm64.zip) · [Versiones](https://github.com/Auky216/open-notch-music/releases) · [Reportar un problema](https://github.com/Auky216/open-notch-music/issues)
+[Descargar v0.5.0](https://github.com/Auky216/open-notch-music/releases/download/v0.5.0/OpenNotch-Music-0.5.0-macOS-arm64.zip) · [Versiones](https://github.com/Auky216/open-notch-music/releases) · [Reportar un problema](https://github.com/Auky216/open-notch-music/issues)
 
 ## Qué incluye
 
 - Carátula e indicador de audio en la vista compacta.
 - Título, artista, álbum, progreso y controles en la vista expandida.
 - Reproducción, pausa, anterior, siguiente, volumen, aleatorio y repetición.
-- Vista expandida más pequeña: 480 puntos de ancho, sin fila de estado de audio.
+- Vista expandida de 480 puntos de ancho, sin fila de estado de audio.
+- Tres estilos de isla: negro uniforme, degradado intenso según la carátula y Liquid Glass.
+- Barras de audio blancas o adaptadas al color de la canción, independientes del estilo del fondo.
 - Volumen con porcentaje temporal, respuesta visual y un tick háptico distinto al de apertura, cada diez puntos y en los extremos.
 - Transición continua con resorte y apertura al acercar el cursor, incluida la zona de la cámara.
 - Respuesta háptica opcional en trackpads compatibles.
@@ -27,6 +29,16 @@ Controla Spotify desde una interfaz nativa, compacta y animada. Desarrollado con
 - Icono propio minimalista; [fuente vectorial y notas de diseño](Resources/Icon/DESIGN.md).
 
 Spotify sigue reproduciendo el audio. OpenNotch Music muestra su estado y envía los controles a la app de escritorio. No necesitas una cuenta de desarrollador de Spotify ni configurar claves de su API web.
+
+## Elegir la apariencia
+
+En **Ajustes → Apariencia** puedes cambiar el estilo y el color de las barras. Se aplican al instante en la vista compacta y expandida y se guardan entre sesiones.
+
+- **Normal · negro:** fondo negro uniforme. Es el modo predeterminado.
+- **Degradado de la canción:** color dominante de la carátula con un degradado intenso; las carátulas monocromáticas usan tonos grises. El color se calcula una vez al cambiar la imagen, sobre una muestra de 32 × 32 píxeles.
+- **Liquid Glass:** material nativo de Apple en macOS 26 o posterior, aplicado a toda la isla. En macOS 14 y 15 utiliza un material translúcido compatible. Con Reducir transparencia, utiliza un fondo opaco. La cámara física del Mac permanece negra.
+
+Las barras pueden permanecer **blancas** o usar un color **adaptado a la canción** en cualquiera de los tres modos. Su movimiento sigue respondiendo al audio real de Spotify cuando el visualizador está habilitado.
 
 ## Descargar e instalar
 
@@ -78,16 +90,18 @@ La app se genera en `dist/Notch Music.app`. El script compila en modo release, c
 swift test --disable-sandbox --build-system native
 ```
 
-La suite comprueba progreso, valores inválidos y redondeo de volumen, tiempos, continuidad del resorte, respuesta del analizador a frecuencias y silencio, nivel nativo de la ventana, continuidad de la silueta y límites de la respuesta háptica de volumen. El nivel de superposición se asigna después de configurar el panel flotante para evitar que AppKit lo reduzca de nuevo.
+La suite comprueba progreso, valores inválidos y redondeo de volumen, tiempos, continuidad del resorte, respuesta del analizador a frecuencias y silencio, nivel nativo de la ventana, continuidad de la silueta, límites de la respuesta háptica de volumen, persistencia de apariencia y extracción del color dominante. El nivel de superposición se asigna después de configurar el panel flotante para evitar que AppKit lo reduzca de nuevo.
 
 Para probar el panel real con datos de demostración, cierra primero la instancia normal:
 
 ```sh
 "dist/Notch Music.app/Contents/MacOS/NotchMusic" --verify-animations "$PWD/dist/qa"
-swift scripts/check-frames.swift "$PWD/dist/qa"
+for estilo in normal albumGradient liquidGlass; do
+  swift scripts/check-frames.swift "$PWD/dist/qa/$estilo"
+done
 ```
 
-La prueba exporta fotogramas e informes de apertura, cierre, inversión, movimiento reducido y comportamiento del cursor. Comprueba además la transparencia fuera de la silueta. La sensación háptica requiere una prueba humana con un trackpad compatible.
+La prueba exporta fotogramas e informes de apertura, cierre, inversión, movimiento reducido y comportamiento del cursor para cada estilo. Comprueba además la transparencia fuera de la silueta; la opacidad interior se exige solo para los dos modos opacos. El material nativo de cristal también se revisa en la app real, porque una captura fuera de pantalla no reproduce por completo el compositor de macOS. La sensación háptica requiere una prueba humana con un trackpad compatible.
 
 Vista previa con datos ficticios:
 
@@ -108,7 +122,7 @@ Las mediciones puntuales no garantizan el mismo consumo en todos los equipos. El
 
 ## Estado del proyecto
 
-Versión actual: **0.4.3**, en desarrollo. Ver [CHANGELOG.md](CHANGELOG.md).
+Versión actual: **0.5.0**, en desarrollo. Ver [CHANGELOG.md](CHANGELOG.md).
 
 Probada localmente en Apple Silicon con macOS 26.6.2 y Spotify 1.3.6.1921. Quedan por validar Intel, otros equipos y versiones, monitores externos, reposo prolongado, otros escenarios de Spaces y cuentas de Spotify diferentes. Apple Music, archivos, AirDrop, Pomodoro, portapapeles, calendario, búsqueda y letras son posibles mejoras futuras.
 

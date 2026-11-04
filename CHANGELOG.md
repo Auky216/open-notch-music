@@ -1,5 +1,14 @@
 # Historial de cambios
 
+## 0.5.0 — 2026-11-04
+
+- Añade tres estilos persistentes para la isla completa: Normal con negro uniforme, degradado de la canción y Liquid Glass.
+- Degradado intenso basado en el color dominante de la carátula, calculado sobre una muestra de 32 × 32 píxeles solo al cambiar la imagen. Las carátulas neutras mantienen una paleta gris.
+- Selector independiente de barras blancas o adaptadas a la canción. Mantiene el visualizador basado en audio real.
+- Liquid Glass nativo de SwiftUI en macOS 26; material translúcido compatible en macOS 14 y 15. Respeta Reducir transparencia y conserva la máscara de la isla.
+- Amplía los ajustes de apariencia y muestra la versión real del paquete.
+- Amplía las pruebas de persistencia, paleta y escenarios de animación a los tres estilos.
+
 ## 0.4.3 — 2026-11-04
 
 - Elimina la fila «Ritmo en vivo» y sus otros estados de la vista expandida. El visualizador compacto y su ajuste siguen disponibles.

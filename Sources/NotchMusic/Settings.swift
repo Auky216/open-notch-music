@@ -8,6 +8,8 @@ final class SettingsStore: ObservableObject {
     @Published var hideWhenIdle: Bool { didSet { defaults.set(hideWhenIdle, forKey: "hideWhenIdle") } }
     @Published var screenID: String { didSet { defaults.set(screenID, forKey: "screenID") } }
     @Published var haptics: Bool { didSet { defaults.set(haptics, forKey: "haptics") } }
+    @Published var appearance: IslandAppearance { didSet { defaults.set(appearance.rawValue, forKey: "islandAppearance") } }
+    @Published var visualizerColor: VisualizerColor { didSet { defaults.set(visualizerColor.rawValue, forKey: "visualizerColor") } }
     @Published var panelEnabled = true
     @Published var screens: [NSScreen] = NSScreen.screens
     @Published private(set) var launchAtLogin = SMAppService.mainApp.status == .enabled
@@ -22,6 +24,8 @@ final class SettingsStore: ObservableObject {
         hideWhenIdle = defaults.bool(forKey: "hideWhenIdle")
         screenID = defaults.string(forKey: "screenID") ?? "auto"
         haptics = defaults.bool(forKey: "haptics")
+        appearance = IslandAppearance(rawValue: defaults.string(forKey: "islandAppearance") ?? "") ?? .normal
+        visualizerColor = VisualizerColor(rawValue: defaults.string(forKey: "visualizerColor") ?? "") ?? .white
     }
 
     func setLaunchAtLogin(_ enabled: Bool) {
@@ -57,9 +61,21 @@ struct SettingsView: View {
                     Text("Tu música, justo aquí.").foregroundStyle(.secondary)
                 }
                 Spacer()
-                Text("0.4.2").font(.caption).foregroundStyle(.tertiary)
+                Text(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "")
+                    .font(.caption).foregroundStyle(.tertiary)
             }
             Form {
+                Section("Apariencia") {
+                    Picker("Estilo de la isla", selection: $settings.appearance) {
+                        ForEach(IslandAppearance.allCases) { appearance in
+                            Text(appearance.title).tag(appearance)
+                        }
+                    }
+                    Text(settings.appearance.detail).font(.caption).foregroundStyle(.secondary)
+                    Picker("Color de las barras", selection: $settings.visualizerColor) {
+                        ForEach(VisualizerColor.allCases) { color in Text(color.title).tag(color) }
+                    }
+                }
                 Section("Interacción") {
                     Toggle("Abrir al pasar el cursor", isOn: $settings.hoverToOpen)
                     Toggle("Respuesta háptica del trackpad", isOn: $settings.haptics)
@@ -95,6 +111,6 @@ struct SettingsView: View {
                 Button("Salir") { NSApp.terminate(nil) }
             }
         }
-        .padding(24).frame(width: 490, height: 565).preferredColorScheme(.dark)
+        .padding(24).frame(width: 490, height: 650).preferredColorScheme(.dark)
     }
 }

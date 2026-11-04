@@ -5,6 +5,22 @@ import AppKit
 enum AnimationCheck {
     static func run(controller: NotchWindowController, directory: URL) async throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        var results: [String: Bool] = [:]
+        for appearance in IslandAppearance.allCases {
+            controller.setAppearanceForCheck(appearance)
+            try await Task.sleep(for: .milliseconds(60))
+            let destination = directory.appendingPathComponent(appearance.rawValue)
+            try await runScenario(controller: controller, directory: destination, appearance: appearance)
+            let data = try Data(contentsOf: destination.appendingPathComponent("animations.json"))
+            let report = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            results[appearance.rawValue] = report?["allPassed"] as? Bool ?? false
+        }
+        try JSONSerialization.data(withJSONObject: ["appearances": results, "allPassed": results.values.allSatisfy { $0 }], options: [.prettyPrinted, .sortedKeys])
+            .write(to: directory.appendingPathComponent("animations.json"))
+    }
+
+    private static func runScenario(controller: NotchWindowController, directory: URL, appearance: IslandAppearance) async throws {
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         var checks: [[String: Any]] = []
         func record(_ name: String, samples: [NSRect], expectedExpanded: Bool) {
             let end = controller.frame
@@ -29,6 +45,7 @@ enum AnimationCheck {
                     let name = "\(tag)-\(String(format: "%02d", index)).png"
                     try? controller.saveSnapshot(to: directory.appendingPathComponent(name))
                     film.append(["file": name, "width": controller.frame.width, "height": controller.frame.height,
+                                 "appearance": appearance.rawValue,
                                  "canvasWidth": controller.state.canvasSize.width, "canvasHeight": controller.state.canvasSize.height])
                 }
                 try? await Task.sleep(for: .milliseconds(16))

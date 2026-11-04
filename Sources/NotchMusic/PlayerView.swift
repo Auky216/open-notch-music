@@ -74,6 +74,7 @@ struct ActivityBars: View {
 struct PlayerView: View {
     @ObservedObject var store: PlaybackStore
     @ObservedObject var panel: PanelState
+    @ObservedObject var settings: SettingsStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -99,19 +100,7 @@ struct PlayerView: View {
                 .accessibilityHidden(panel.expanded)
         }
         .frame(width: size.width, height: size.height, alignment: .top)
-        .background {
-            ZStack(alignment: .leading) {
-                Color.black
-                if store.track != nil {
-                    RadialGradient(colors: [store.tint.opacity(0.26), .clear],
-                                   center: .init(x: 0.2, y: 0.45), startRadius: 10, endRadius: 330)
-                    LinearGradient(colors: [.clear, .black.opacity(0.8)], startPoint: .leading, endPoint: .trailing)
-                }
-            }
-            .overlay(alignment: .top) { Color.black.frame(height: panel.topHeight) }
-            .opacity(panel.expansion)
-            .background(Color.black)
-        }
+        .modifier(IslandSurface(appearance: settings.appearance, tint: store.tint, secondary: store.secondaryTint))
         .clipShape(NotchShape())
         .contentShape(NotchShape())
         .preferredColorScheme(.dark)
@@ -126,7 +115,8 @@ struct PlayerView: View {
                 ArtworkView(image: store.artwork, size: max(22, panel.topHeight - 10))
                 Spacer(minLength: 0)
                 if store.track != nil {
-                    ActivityBars(playing: store.track?.isPlaying == true, color: .white, meter: store.audioMeter)
+                    ActivityBars(playing: store.track?.isPlaying == true,
+                                 color: settings.visualizerColor == .white ? .white : store.visualizerTint, meter: store.audioMeter)
                 } else {
                     Image(systemName: store.permissionDenied ? "exclamationmark.circle" : "music.note")
                         .font(.system(size: 13, weight: .medium)).foregroundStyle(.white.opacity(0.6))
