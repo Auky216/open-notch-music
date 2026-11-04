@@ -52,8 +52,8 @@ final class NotchWindowController {
     private var motionTimer: Timer?
     private var lastMotionTime: TimeInterval = 0
     private let surfaceMask = CAShapeLayer()
-    static let expandedWidth: CGFloat = 548
-    static let expandedBodyHeight: CGFloat = 260
+    static let expandedWidth: CGFloat = 480
+    static let expandedBodyHeight: CGFloat = 214
     var openSettings: (() -> Void)?
     private(set) var hapticCount = 0
     var reducedMotionOverride: Bool?
@@ -77,6 +77,7 @@ final class NotchWindowController {
         state.onSettings = { [weak self] in self?.openSettings?() }
         state.onPin = { [weak self] in self?.state.pinned.toggle() }
         state.onHaptic = { [weak self] in self?.tick() }
+        state.onVolumeHaptic = { [weak self] in self?.volumeTick() }
         settings.objectWillChange.sink { [weak self] _ in
             DispatchQueue.main.async { self?.update(animated: false) }
         }.store(in: &subscriptions)
@@ -263,6 +264,11 @@ final class NotchWindowController {
         guard settings.haptics else { return }
         hapticCount += 1
         NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+    }
+
+    private func volumeTick() {
+        guard settings.haptics else { return }
+        NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
     }
 
     private func silhouette(in size: CGSize) -> Path {

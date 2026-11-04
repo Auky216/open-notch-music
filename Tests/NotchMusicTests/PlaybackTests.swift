@@ -21,6 +21,16 @@ final class PlaybackTests: XCTestCase {
         XCTAssertEqual(PlaybackCommand.seek(-5).script, "set player position to 0.0")
         XCTAssertEqual(PlaybackCommand.volume(.infinity).script, "set sound volume to 0")
         XCTAssertEqual(PlaybackCommand.volume(200).script, "set sound volume to 100")
+        XCTAssertEqual(PlaybackCommand.volume(44.999999999).script, PlaybackCommand.volume(45).script)
+        XCTAssertEqual(PlaybackCommand.volume(-1).script, "set sound volume to 0")
+    }
+
+    func testVolumeCompensatesOnlyTheOnePointSpotifyDiscrepancy() {
+        let script = PlaybackCommand.volume(45).script
+        XCTAssertTrue(script.contains("if sound volume is 44 then\n    set sound volume to 46"))
+        XCTAssertTrue(script.contains("repeat 6 times"))
+        XCTAssertEqual(PlaybackCommand.volume(100).script, "set sound volume to 100")
+        XCTAssertEqual(PlaybackCommand.volume(0).script, "set sound volume to 0")
     }
 
     func testTimeLabelsHandleInvalidAndNegativeValues() {

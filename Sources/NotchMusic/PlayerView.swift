@@ -7,7 +7,7 @@ final class PanelState: ObservableObject {
     @Published var topHeight: CGFloat = 36
     @Published var compactWidth: CGFloat = 300
     @Published var expansion: CGFloat = 0
-    @Published var canvasSize = CGSize(width: 548, height: 298)
+    @Published var canvasSize = CGSize(width: 480, height: 252)
     var surfaceSize: CGSize {
         CGSize(width: compactWidth + (canvasSize.width - compactWidth) * expansion,
                height: topHeight + (canvasSize.height - topHeight) * expansion)
@@ -16,6 +16,7 @@ final class PanelState: ObservableObject {
     var onSettings: (() -> Void)?
     var onPin: (() -> Void)?
     var onHaptic: (() -> Void)?
+    var onVolumeHaptic: (() -> Void)?
 }
 
 struct NotchShape: Shape {
@@ -163,20 +164,18 @@ struct PlayerView: View {
     }
 
     private func expanded(_ track: PlaybackSnapshot) -> some View {
-        VStack(spacing: 14) {
-            HStack(spacing: 21) {
-                ArtworkView(image: store.artwork, size: 116)
-                    .shadow(color: .black.opacity(0.5), radius: 16, y: 8)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(track.title).font(.system(size: 23, weight: .semibold)).tracking(-0.5)
+        VStack(spacing: 10) {
+            HStack(spacing: 16) {
+                ArtworkView(image: store.artwork, size: 86)
+                    .shadow(color: .black.opacity(0.4), radius: 10, y: 5)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(track.title).font(.system(size: 19, weight: .semibold)).tracking(-0.35)
                         .lineLimit(2).fixedSize(horizontal: false, vertical: true).help(track.title)
-                    Text(track.artist).font(.system(size: 14, weight: .medium))
+                    Text(track.artist).font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.white.opacity(0.70)).lineLimit(1).help(track.artist)
-                    Text(track.album).font(.system(size: 11)).foregroundStyle(.white.opacity(0.4)).lineLimit(1)
-                    AudioStatusView(meter: store.audioMeter, playing: track.isPlaying, demo: store.demo)
-                        .padding(.top, 5)
+                    Text(track.album).font(.system(size: 10)).foregroundStyle(.white.opacity(0.4)).lineLimit(1)
                 }.frame(maxWidth: .infinity, alignment: .leading)
-            }
+            }.frame(height: 86)
             SeekView(track: track, disabled: store.busy || store.demo) { position in
                 panel.onHaptic?()
                 store.send(.seek(position))
@@ -187,14 +186,14 @@ struct PlayerView: View {
                         .foregroundStyle(track.shuffle ? Color.mint : .white.opacity(0.45))
                     iconButton("repeat", label: "Repetir", size: 14) { store.send(.repeating(!track.repeatEnabled)) }
                         .foregroundStyle(track.repeatEnabled ? Color.mint : .white.opacity(0.45))
-                }.frame(width: 108, alignment: .leading)
+                }.frame(width: 100, alignment: .leading)
                 Spacer(minLength: 4)
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     transport("backward.end.fill", label: "Canción anterior") { store.send(.previous) }
                     Button { store.send(.toggle) } label: {
                         Image(systemName: track.isPlaying ? "pause.fill" : "play.fill")
-                            .font(.system(size: 22, weight: .semibold)).offset(x: track.isPlaying ? 0 : 1)
-                            .foregroundStyle(.black).frame(width: 52, height: 52)
+                            .font(.system(size: 19, weight: .semibold)).offset(x: track.isPlaying ? 0 : 1)
+                            .foregroundStyle(.black).frame(width: 44, height: 44)
                             .background(LinearGradient(colors: [.white, .white.opacity(0.85)], startPoint: .top, endPoint: .bottom), in: Circle())
                             .shadow(color: .white.opacity(0.12), radius: 12, y: 2)
                     }.buttonStyle(TransportButtonStyle())
@@ -202,11 +201,12 @@ struct PlayerView: View {
                     transport("forward.end.fill", label: "Siguiente canción") { store.send(.next) }
                 }
                 Spacer(minLength: 4)
-                VolumeView(volume: track.volume, disabled: store.busy || store.demo) { store.send(.volume($0)) }
-                    .frame(width: 108, alignment: .trailing)
+                VolumeView(volume: track.volume, disabled: store.busy || store.demo,
+                           onFeedback: { panel.onVolumeHaptic?() }) { store.send(.volume($0)) }
+                    .frame(width: 100, alignment: .trailing)
             }
             .disabled(store.busy || store.demo)
-        }.padding(.horizontal, 33).padding(.top, 12).padding(.bottom, 20)
+        }.padding(.horizontal, 29).padding(.top, 10).padding(.bottom, 16)
     }
 
     private var emptyState: some View {
@@ -244,8 +244,8 @@ struct PlayerView: View {
 
     private func transport(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: symbol).font(.system(size: 21, weight: .semibold))
-                .foregroundStyle(.white).frame(width: 40, height: 40)
+            Image(systemName: symbol).font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(.white).frame(width: 34, height: 34)
                 .background(.white.opacity(0.06), in: Circle())
         }.buttonStyle(TransportButtonStyle()).help(label).accessibilityLabel(label)
     }
@@ -267,19 +267,51 @@ struct SeekView: View {
 struct VolumeView: View {
     let volume: Double
     let disabled: Bool
+    let onFeedback: () -> Void
     let setVolume: (Double) -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var draft: Double?
+    @State private var pendingVolume: Double?
     @State private var dragging = false
+    @State private var hovering = false
+    @State private var showingFeedback = false
+    @State private var feedbackStep = 0
+    @State private var feedbackGate = VolumeFeedbackGate()
     @State private var commitTask: Task<Void, Never>?
+    @State private var feedbackTask: Task<Void, Never>?
+    @State private var acknowledgeTask: Task<Void, Never>?
+    private var displayedVolume: Double { draft ?? pendingVolume ?? min(100, max(0, volume)) }
     var body: some View {
         HStack(spacing: 5) {
-            Image(systemName: volume == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                .font(.system(size: 10)).foregroundStyle(.white.opacity(0.4)).frame(width: 15)
-            Slider(value: Binding(get: { draft ?? min(100, max(0, volume)) }, set: { draft = $0 }), in: 0...100, onEditingChanged: { editing in
+            Image(systemName: displayedVolume == 0 ? "speaker.slash.fill" : displayedVolume < 50 ? "speaker.wave.1.fill" : "speaker.wave.2.fill")
+                .font(.system(size: 10)).foregroundStyle(.white.opacity(showingFeedback ? 0.95 : 0.45)).frame(width: 15)
+                .symbolEffect(.bounce, options: .nonRepeating, value: reduceMotion ? 0 : feedbackStep)
+            Slider(value: Binding(get: { displayedVolume }, set: { value in
+                if !showingFeedback { feedbackGate.reset(at: displayedVolume) }
+                draft = value.rounded()
+                showFeedback()
+                if feedbackGate.update(value.rounded(), at: ProcessInfo.processInfo.systemUptime) {
+                    feedbackStep += 1
+                    onFeedback()
+                }
+            }), in: 0...100, step: 1, onEditingChanged: { editing in
                 dragging = editing
                 if !editing { commit() }
-            }).controlSize(.mini).frame(width: 85).disabled(disabled).accessibilityLabel("Volumen de Spotify")
+            }).controlSize(.mini).frame(width: 76).disabled(disabled).accessibilityLabel("Volumen de Spotify")
+                .scaleEffect(x: 1, y: showingFeedback || hovering ? 1.12 : 1)
+                .overlay(alignment: .top) {
+                    Text("\(Int(displayedVolume.rounded())) %")
+                        .font(.system(size: 9, weight: .medium, design: .rounded)).monospacedDigit()
+                        .foregroundStyle(.white.opacity(0.85))
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(.black.opacity(0.85), in: Capsule())
+                        .offset(y: -16).opacity(showingFeedback ? 1 : 0)
+                        .allowsHitTesting(false).accessibilityHidden(true)
+                }
         }
+        .onHover { hovering = $0 }
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: showingFeedback)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: hovering)
         .onChange(of: draft) { _, value in
             commitTask?.cancel()
             guard value != nil, !dragging else { return }
@@ -289,11 +321,36 @@ struct VolumeView: View {
                 commit()
             }
         }
-        .onDisappear { commitTask?.cancel() }
+        .onChange(of: volume) { _, actual in
+            if let pendingVolume, abs(actual - pendingVolume) <= 1 {
+                self.pendingVolume = nil
+                acknowledgeTask?.cancel()
+            }
+        }
+        .onDisappear { commitTask?.cancel(); feedbackTask?.cancel(); acknowledgeTask?.cancel() }
+    }
+
+    private func showFeedback() {
+        showingFeedback = true
+        feedbackTask?.cancel()
+        feedbackTask = Task {
+            try? await Task.sleep(for: .milliseconds(800))
+            guard !Task.isCancelled else { return }
+            showingFeedback = false
+        }
     }
 
     private func commit() {
         commitTask?.cancel()
-        if let value = draft { setVolume(value); draft = nil }
+        guard let value = draft else { return }
+        pendingVolume = value
+        draft = nil
+        setVolume(value)
+        acknowledgeTask?.cancel()
+        acknowledgeTask = Task {
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            pendingVolume = nil
+        }
     }
 }

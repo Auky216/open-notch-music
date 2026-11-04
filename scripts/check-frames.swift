@@ -31,7 +31,7 @@ for tag in ["open", "close"] {
             }
         }
         if leaks > 0 { failures.append("\(name): \(leaks) píxeles de muestra fuera del contorno") }
-        if alpha(274, min(height / 2, 15)) < 0.95 { failures.append("\(name): centro transparente") }
+        if alpha(canvasWidth / 2, min(height / 2, 15)) < 0.95 { failures.append("\(name): centro transparente") }
         if alpha(left + 35, 15) < 0.95 || alpha(left + width - 35, 15) < 0.95 {
             failures.append("\(name): franja superior de la isla no opaca")
         }

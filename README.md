@@ -8,13 +8,15 @@ Controla Spotify desde una interfaz nativa, compacta y animada. Desarrollado con
 
 **Código abierto · Licencia MIT · macOS 14+ · Apple Silicon**
 
-[Descargar v0.4.2](https://github.com/Auky216/open-notch-music/releases/download/v0.4.2/OpenNotch-Music-0.4.2-macOS-arm64.zip) · [Versiones](https://github.com/Auky216/open-notch-music/releases) · [Reportar un problema](https://github.com/Auky216/open-notch-music/issues)
+[Descargar v0.4.3](https://github.com/Auky216/open-notch-music/releases/download/v0.4.3/OpenNotch-Music-0.4.3-macOS-arm64.zip) · [Versiones](https://github.com/Auky216/open-notch-music/releases) · [Reportar un problema](https://github.com/Auky216/open-notch-music/issues)
 
 ## Qué incluye
 
 - Carátula e indicador de audio en la vista compacta.
 - Título, artista, álbum, progreso y controles en la vista expandida.
 - Reproducción, pausa, anterior, siguiente, volumen, aleatorio y repetición.
+- Vista expandida más pequeña: 480 puntos de ancho, sin fila de estado de audio.
+- Volumen con porcentaje temporal, respuesta visual y un tick háptico distinto al de apertura, cada diez puntos y en los extremos.
 - Transición continua con resorte y apertura al acercar el cursor, incluida la zona de la cámara.
 - Respuesta háptica opcional en trackpads compatibles.
 - Panel configurado para acompañar a otras apps en pantalla completa, con recuperación al cambiar de espacio.
@@ -32,7 +34,7 @@ Spotify sigue reproduciendo el audio. OpenNotch Music muestra su estado y envía
 2. Descomprímelo y mueve **Notch Music.app** a Aplicaciones.
 3. Abre Spotify y reproduce una canción.
 4. Abre Notch Music, acerca el cursor al notch y pulsa **Conectar**. macOS puede solicitar permiso de Automatización para controlar Spotify.
-5. Opcionalmente, pulsa **Activar ritmo real** para usar el visualizador de audio.
+5. Opcionalmente, activa **Visualizador con audio real** en Ajustes para usar las barras de audio de la vista compacta.
 
 La versión descargable es una **compilación preliminar para Apple Silicon**, con firma local ad hoc. Todavía no cuenta con firma Developer ID ni notarización de Apple; macOS puede bloquear su apertura. También puedes compilarla desde el código fuente. La versión no se ha validado en Intel.
 
@@ -52,6 +54,12 @@ El visualizador requiere **macOS 14.2 o posterior** y permiso de audio del siste
 
 El audio se toma de Spotify de escritorio en este Mac. Spotify web y la reproducción remota mediante Spotify Connect no están validados. Las carátulas se descargan de la URL proporcionada por Spotify. No hay servidor propio ni analíticas.
 
+## Letras y karaoke
+
+El karaoke oficial de Spotify no está integrado. La [referencia pública de Spotify](https://developer.spotify.com/documentation/web-api/reference/get-the-users-currently-playing-track) no ofrece un endpoint de letras o karaoke, y el diccionario de automatización de la app de macOS tampoco los expone. Spotify confirmó la [ausencia de una API pública de letras](https://community.spotify.com/t5/Spotify-for-Developers/Update-endpoint-for-lyrics/td-p/5355493).
+
+Para cantar con las letras disponibles en Spotify, abre su app y pulsa el icono de letras de la parte inferior, como indica su [ayuda oficial](https://support.spotify.com/us/article/lyrics/). Su disponibilidad depende de la canción y el dispositivo.
+
 ## Compilar
 
 Requisitos: macOS 14 o posterior y Xcode con las herramientas de Swift y el SDK de macOS.
@@ -70,7 +78,7 @@ La app se genera en `dist/Notch Music.app`. El script compila en modo release, c
 swift test --disable-sandbox --build-system native
 ```
 
-La suite comprueba progreso, valores inválidos de controles, tiempos, continuidad del resorte, respuesta del analizador a frecuencias y silencio, nivel nativo de la ventana y continuidad de la silueta. El nivel de superposición se asigna después de configurar el panel flotante para evitar que AppKit lo reduzca de nuevo.
+La suite comprueba progreso, valores inválidos y redondeo de volumen, tiempos, continuidad del resorte, respuesta del analizador a frecuencias y silencio, nivel nativo de la ventana, continuidad de la silueta y límites de la respuesta háptica de volumen. El nivel de superposición se asigna después de configurar el panel flotante para evitar que AppKit lo reduzca de nuevo.
 
 Para probar el panel real con datos de demostración, cierra primero la instancia normal:
 
@@ -100,7 +108,7 @@ Las mediciones puntuales no garantizan el mismo consumo en todos los equipos. El
 
 ## Estado del proyecto
 
-Versión actual: **0.4.2**, en desarrollo. Ver [CHANGELOG.md](CHANGELOG.md).
+Versión actual: **0.4.3**, en desarrollo. Ver [CHANGELOG.md](CHANGELOG.md).
 
 Probada localmente en Apple Silicon con macOS 26.6.2 y Spotify 1.3.6.1921. Quedan por validar Intel, otros equipos y versiones, monitores externos, reposo prolongado, otros escenarios de Spaces y cuentas de Spotify diferentes. Apple Music, archivos, AirDrop, Pomodoro, portapapeles, calendario, búsqueda y letras son posibles mejoras futuras.
 

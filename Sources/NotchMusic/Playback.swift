@@ -36,7 +36,22 @@ enum PlaybackCommand: Sendable {
         case .next: return "next track"
         case .previous: return "previous track"
         case .seek(let seconds): return "set player position to \(Self.number(seconds, upper: 86400))"
-        case .volume(let volume): return "set sound volume to \(Int(Self.number(volume, upper: 100)))"
+        case .volume(let volume):
+            let target = Int(Self.number(volume, upper: 100).rounded())
+            guard (1..<100).contains(target) else { return "set sound volume to \(target)" }
+            // Spotify applies volume asynchronously and may report target - 1.
+            // Retry only that specific discrepancy, with one bounded correction.
+            return """
+            set sound volume to \(target)
+            repeat 6 times
+                if sound volume is \(target) then exit repeat
+                delay 0.05
+            end repeat
+            if sound volume is \(target - 1) then
+                set sound volume to \(target + 1)
+                delay 0.06
+            end if
+            """
         case .shuffle(let value): return "set shuffling to \(value ? "true" : "false")"
         case .repeating(let value): return "set repeating to \(value ? "true" : "false")"
         }

@@ -18,8 +18,8 @@ final class OverlayTests: XCTestCase {
 
     func testIslandRemainsOneContinuousContourDuringExpansion() {
         for fraction in [0.0, 0.02, 0.1, 0.3, 0.6, 1.0] {
-            let width = 321 + 227 * fraction
-            let height = 38 + 260 * fraction
+            let width = 321 + (480 - 321) * fraction
+            let height = 38 + 214 * fraction
             let path = NotchShape().path(in: CGRect(x: 0, y: 0, width: width, height: height))
             var contours = 0
             path.cgPath.applyWithBlock { element in

@@ -1,28 +1,5 @@
 import SwiftUI
 
-struct AudioStatusView: View {
-    @ObservedObject var meter: SpotifyAudioMeter
-    let playing: Bool
-    let demo: Bool
-    var body: some View {
-        Group {
-            if demo {
-                Label("Vista previa", systemImage: "waveform").foregroundStyle(.white.opacity(0.45))
-            } else if !meter.enabled {
-                Button { meter.setEnabled(true) } label: {
-                    Label("Activar ritmo real", systemImage: "waveform")
-                        .foregroundStyle(.white.opacity(0.65))
-                }.buttonStyle(.plain).help("Permitir analizar solo el audio de Spotify en este Mac")
-            } else {
-                HStack(spacing: 6) {
-                    ActivityBars(playing: playing, color: .white.opacity(0.7), meter: meter).scaleEffect(0.65).frame(width: 16, height: 14)
-                    Text(!playing ? "En pausa" : meter.receiving ? "Ritmo en vivo" : "Esperando audio")
-                }.foregroundStyle(.white.opacity(0.55)).help(meter.message)
-            }
-        }.font(.system(size: 10, weight: .medium))
-    }
-}
-
 struct AudioMeterSettingsView: View {
     @ObservedObject var meter: SpotifyAudioMeter
     var body: some View {
