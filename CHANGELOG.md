@@ -1,5 +1,10 @@
 # Historial de cambios
 
+## 0.5.1 — 2026-11-04
+
+- Simplifica únicamente el control de volumen: altavoz pequeño y deslizador continuo con indicador circular, sin porcentaje, marcas ni animaciones adicionales.
+- Conserva el tick háptico, el ajuste real de Spotify y la compensación de redondeo. Elimina la tarea temporal del indicador visual.
+
 ## 0.5.0 — 2026-11-04
 
 - Añade tres estilos persistentes para la isla completa: Normal con negro uniforme, degradado de la canción y Liquid Glass.

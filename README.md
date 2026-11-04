@@ -8,7 +8,7 @@ Controla Spotify desde una interfaz nativa, compacta y animada. Desarrollado con
 
 **Código abierto · Licencia MIT · macOS 14+ · Apple Silicon**
 
-[Descargar v0.5.0](https://github.com/Auky216/open-notch-music/releases/download/v0.5.0/OpenNotch-Music-0.5.0-macOS-arm64.zip) · [Versiones](https://github.com/Auky216/open-notch-music/releases) · [Reportar un problema](https://github.com/Auky216/open-notch-music/issues)
+[Descargar v0.5.1](https://github.com/Auky216/open-notch-music/releases/download/v0.5.1/OpenNotch-Music-0.5.1-macOS-arm64.zip) · [Versiones](https://github.com/Auky216/open-notch-music/releases) · [Reportar un problema](https://github.com/Auky216/open-notch-music/issues)
 
 ## Qué incluye
 
@@ -18,7 +18,7 @@ Controla Spotify desde una interfaz nativa, compacta y animada. Desarrollado con
 - Vista expandida de 480 puntos de ancho, sin fila de estado de audio.
 - Tres estilos de isla: negro uniforme, degradado intenso según la carátula y Liquid Glass.
 - Barras de audio blancas o adaptadas al color de la canción, independientes del estilo del fondo.
-- Volumen con porcentaje temporal, respuesta visual y un tick háptico distinto al de apertura, cada diez puntos y en los extremos.
+- Volumen minimalista: altavoz pequeño y deslizador continuo, con un tick háptico distinto al de apertura cada diez puntos y en los extremos.
 - Transición continua con resorte y apertura al acercar el cursor, incluida la zona de la cámara.
 - Respuesta háptica opcional en trackpads compatibles.
 - Panel configurado para acompañar a otras apps en pantalla completa, con recuperación al cambiar de espacio.
@@ -122,7 +122,7 @@ Las mediciones puntuales no garantizan el mismo consumo en todos los equipos. El
 
 ## Estado del proyecto
 
-Versión actual: **0.5.0**, en desarrollo. Ver [CHANGELOG.md](CHANGELOG.md).
+Versión actual: **0.5.1**, en desarrollo. Ver [CHANGELOG.md](CHANGELOG.md).
 
 Probada localmente en Apple Silicon con macOS 26.6.2 y Spotify 1.3.6.1921. Quedan por validar Intel, otros equipos y versiones, monitores externos, reposo prolongado, otros escenarios de Spaces y cuentas de Spotify diferentes. Apple Music, archivos, AirDrop, Pomodoro, portapapeles, calendario, búsqueda y letras son posibles mejoras futuras.
 

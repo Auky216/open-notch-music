@@ -259,49 +259,31 @@ struct VolumeView: View {
     let disabled: Bool
     let onFeedback: () -> Void
     let setVolume: (Double) -> Void
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var draft: Double?
     @State private var pendingVolume: Double?
     @State private var dragging = false
-    @State private var hovering = false
-    @State private var showingFeedback = false
-    @State private var feedbackStep = 0
     @State private var feedbackGate = VolumeFeedbackGate()
+    @State private var lastInteractionTime = -Double.infinity
     @State private var commitTask: Task<Void, Never>?
-    @State private var feedbackTask: Task<Void, Never>?
     @State private var acknowledgeTask: Task<Void, Never>?
     private var displayedVolume: Double { draft ?? pendingVolume ?? min(100, max(0, volume)) }
     var body: some View {
         HStack(spacing: 5) {
             Image(systemName: displayedVolume == 0 ? "speaker.slash.fill" : displayedVolume < 50 ? "speaker.wave.1.fill" : "speaker.wave.2.fill")
-                .font(.system(size: 10)).foregroundStyle(.white.opacity(showingFeedback ? 0.95 : 0.45)).frame(width: 15)
-                .symbolEffect(.bounce, options: .nonRepeating, value: reduceMotion ? 0 : feedbackStep)
+                .font(.system(size: 10)).foregroundStyle(.white.opacity(0.45)).frame(width: 15)
             Slider(value: Binding(get: { displayedVolume }, set: { value in
-                if !showingFeedback { feedbackGate.reset(at: displayedVolume) }
+                let now = ProcessInfo.processInfo.systemUptime
+                if now - lastInteractionTime > 0.8 { feedbackGate.reset(at: displayedVolume) }
+                lastInteractionTime = now
                 draft = value.rounded()
-                showFeedback()
-                if feedbackGate.update(value.rounded(), at: ProcessInfo.processInfo.systemUptime) {
-                    feedbackStep += 1
+                if feedbackGate.update(value.rounded(), at: now) {
                     onFeedback()
                 }
-            }), in: 0...100, step: 1, onEditingChanged: { editing in
+            }), in: 0...100, onEditingChanged: { editing in
                 dragging = editing
                 if !editing { commit() }
             }).controlSize(.mini).frame(width: 76).disabled(disabled).accessibilityLabel("Volumen de Spotify")
-                .scaleEffect(x: 1, y: showingFeedback || hovering ? 1.12 : 1)
-                .overlay(alignment: .top) {
-                    Text("\(Int(displayedVolume.rounded())) %")
-                        .font(.system(size: 9, weight: .medium, design: .rounded)).monospacedDigit()
-                        .foregroundStyle(.white.opacity(0.85))
-                        .padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(.black.opacity(0.85), in: Capsule())
-                        .offset(y: -16).opacity(showingFeedback ? 1 : 0)
-                        .allowsHitTesting(false).accessibilityHidden(true)
-                }
         }
-        .onHover { hovering = $0 }
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: showingFeedback)
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: hovering)
         .onChange(of: draft) { _, value in
             commitTask?.cancel()
             guard value != nil, !dragging else { return }
@@ -317,17 +299,7 @@ struct VolumeView: View {
                 acknowledgeTask?.cancel()
             }
         }
-        .onDisappear { commitTask?.cancel(); feedbackTask?.cancel(); acknowledgeTask?.cancel() }
-    }
-
-    private func showFeedback() {
-        showingFeedback = true
-        feedbackTask?.cancel()
-        feedbackTask = Task {
-            try? await Task.sleep(for: .milliseconds(800))
-            guard !Task.isCancelled else { return }
-            showingFeedback = false
-        }
+        .onDisappear { commitTask?.cancel(); acknowledgeTask?.cancel() }
     }
 
     private func commit() {
